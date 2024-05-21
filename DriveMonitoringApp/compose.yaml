@@ -1,0 +1,9 @@
+#This is the Docker-compose file to build the Django container. This is not implemented but would be a great feature to add in the future.
+services:
+    dmdjango:
+      hostname: "DM-django"
+      build: .
+      ports:
+        - 8086:8000
+      volumes:
+        - .:/code
