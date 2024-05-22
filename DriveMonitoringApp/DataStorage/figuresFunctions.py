@@ -301,14 +301,12 @@ def FigureLoadPin(dfloadpin, path, date):
         file = finders.find(newPath)
         print(newPath)
         if file is None:
-            file = os.path.abspath("DriveMonitoringApp/DataStorage/"+newPath)
+            file = os.path.abspath("DataStorage/"+newPath)
             if not os.path.exists(file):
                 os.makedirs(file)
     else:
         newPath = pathParts[-4]+"/"+pathParts[-3]+"/LoadPin"
-        print(newPath)
         file = finders.find(newPath)
-        print(file)
         if file is None:
             file = path.replace(pathParts[-4]+"/"+pathParts[-3]+"/"+pathParts[-2]+"/"+pathParts[-1], newPath)
             os.mkdir(file)

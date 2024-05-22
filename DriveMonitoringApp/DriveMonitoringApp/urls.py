@@ -22,9 +22,10 @@ from django.conf.urls.static import static
 
 #Here are the accesible urls, the format is ("PATH", FUNCTION CALLED, NAME), The static part on the end is just to work with static files and allow the urls to acces the static content
 urlpatterns = [
+    path('health', Sv.health),
     path('admin/', admin.site.urls),
     path('driveMonitoring', Sv.driveMonitoring, name="driveMonitoring"),
-    path('driveMonitoring/', Sv.driveMonitoring, name="driveMonitoringD"),
+    path('driveMonitoring/', Sv.driveMonitoring,  name="driveMonitoringD"),
     path('loadPins', Sv.loadPins, name="loadPins"),
     path('loadPins/', Sv.loadPins, name="loadPinsD"),
     path('storage/getLogs', Sv.getLogs),
@@ -34,4 +35,5 @@ urlpatterns = [
     path('storage/getLoadPins', Sv.getLoadPins),
     path('storage/generateHotPlots', Sv.generateHotPlots),
     path('storage/hotPlotGeneration', Sv.generateDriveHotPlots),
+    path('storage/checkPlots', Sv.checkPlots),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

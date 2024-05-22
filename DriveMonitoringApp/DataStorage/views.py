@@ -11,6 +11,9 @@ import pandas as pd
 from . import figuresFunctions
 from django.contrib.staticfiles import finders
 import os, subprocess
+from os import path as ph
+import paramiko
+from Ssh_Info import IP, PASS, USERNAME
 
 #Function that returns the data and render the DriveMonitoring view or throws an Json response with an error message
 def driveMonitoring(request):
@@ -87,6 +90,21 @@ def generatePlots(date, Hot = False):
         operation = MongoDb.getOperation(MongoDb,date)
         generalTrack = None
         try:
+            #Folder structure creation
+            dirname = "DataStorage/static/html/Log_cmd." + date
+            dirParts = dirname.split("/")
+            if ph.exists(dirname.replace("/"+dirParts[-1], "")) == False:
+                os.mkdir(dirname.replace("/"+dirParts[-1], ""))
+            if ph.exists(dirname)==False :
+                os.mkdir(dirname)
+            if ph.exists(dirname+"/Track")==False :
+                    os.mkdir(dirname+"/Track")
+            if ph.exists(dirname+"/Parkout")==False :
+                        os.mkdir(dirname+"/Parkout")
+            if ph.exists(dirname+"/Parkin")==False :
+                        os.mkdir(dirname+"/Parkin")
+            if ph.exists(dirname+"/GoToPos")==False :
+                        os.mkdir(dirname+"/GoToPos")
             data = MongoDb.getDatedData(MongoDb, operation[0]["Tmin"], operation[0]["Tmax"])
             generalTrack = {}
             generalTrack["dfpos"], generalTrack["dfloadpin"], generalTrack["dftrack"], generalTrack["dftorque"], generalTrack["dfacc"], generalTrack["dfbm"], generalTrack["name"], generalTrack["addText"], generalTrack["RA"], generalTrack["DEC"] = ([] for i in range(10))
@@ -271,11 +289,38 @@ def generateHotPlots(request):
         try:
             date = datetime.now()
             date = date.strftime("%Y-%m-%d")
-            status = subprocess.check_output('''
-                      source /Users/antoniojose/Desktop/LST1-DM-WEB/.venv/bin/activate
-                      sh /Users/antoniojose/Desktop/LST1-DM-WEB/DisplayTrack-HotPlots.sh %s'''
-                       % (date), shell=True, text=True)#Change this to an SSH conection to execute the script
-            print(status)
-            return JsonResponse({"status": status})
+            ssh = paramiko.SSHClient()
+            #Command to generate the the host-keys permanently: ssh -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=./known_hosts user@host
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(IP, username=USERNAME, password=PASS)
+            commands = ''' source /Users/antoniojose/Desktop/LST1-DM-WEB/.venv/bin/activate
+                            sh /Users/antoniojose/Desktop/LST1-DM-WEB/DisplayTrack-HotPlots.sh %s''' % (date)
+            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command("ls -la")
+            return JsonResponse({"status": "Este es el error: "+str(ssh_stderr.read().decode())+"Este es el in: "+str(ssh_stdin.read().decode())+"Este es el out: "+str(ssh_stdout.read().decode())})
         except Exception as e:
             return JsonResponse({"Message": "There was an error: "+str(e)})
+
+def health(request):
+    return HttpResponse("Server is working")
+
+@csrf_exempt
+def checkPlots(request):
+    try:
+        userdict = json.loads(str(request.body,encoding='utf-8'))
+        last7Operations = MongoDb.getLast7Operations(MongoDb)
+        dashedDate = userdict["date"]
+        dirname = userdict["dirname"]
+        i = 0
+        try: 
+            while i < len(last7Operations):
+                operation = last7Operations[i]
+                generalDir = dirname.replace(dashedDate, operation["Date"])
+                directories = os.listdir(generalDir)
+                if len(os.listdir(generalDir+"/"+directories[0])) == 0:
+                    generatePlots(operation["Tmin"])
+                i += 1
+            return JsonResponse({"data": True})
+        except Exception as e:
+            return JsonResponse({"data": False})
+    except Exception as e:
+        return JsonResponse({"data": "There was an error or all the plots are already generated: "+str(e)})

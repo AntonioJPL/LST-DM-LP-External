@@ -3,6 +3,7 @@ services:
     dmdjango:
       hostname: "DM-django"
       build: .
+      command: python3 manage.py runserver 0.0.0.0:8000
       ports:
         - 8086:8000
       volumes:

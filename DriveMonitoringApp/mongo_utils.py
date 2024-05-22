@@ -10,7 +10,7 @@ from django.contrib.staticfiles import finders
 
 #Class containing all the Database information and functions
 class MongoDb:
-    my_client = pymongo.MongoClient('localhost', 27005)
+    my_client = pymongo.MongoClient('192.168.0.23', 27005)
     dbname = my_client['Drive-Monitoring']
     collection_logs = dbname["Logs"]
     collection_data = dbname["Data"]
@@ -287,7 +287,7 @@ class MongoDb:
         return list(self.dbname["Types"].find())
     #Function that generates the Load Pin plot url and returns them. It generates the url based on the data "file" parameter and replaces the end of it with the found plot path.
     def getLPPlots(self, date):
-        newPath = "DriveMonitoringApp/DataStorage/static/html/Log_cmd."+date+"/LoadPin"
+        newPath = "DataStorage/static/html/Log_cmd."+date+"/LoadPin"
         file = os.path.abspath(newPath)
         if file is not None:
             files = glob.glob(file+"/"+"LoadPin_"+date+"*")
@@ -303,3 +303,6 @@ class MongoDb:
                 return {"Message": "There is no data to show"}
         else:
             return {"Message": "There is no data to show"}
+    #Function that returns the las 7 operation stored in the DB, this is used to check if the plots are generated on the LibDisplayTrackStore.py file
+    def getLast7Operations(self):
+        return list(self.dbname["Operations"].aggregate([{"$sort": {"Date": -1}}, {"$limit": 7}]))

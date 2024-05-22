@@ -115,14 +115,14 @@ const fetchLatestData = async(date = null) => {
         summaryParsedData.splice(0, summaryParsedData.length)
         logsData.splice(0, logsData.length)
         if(date != null){
-            serverRes = await fetch("http://127.0.0.1:8000/storage/getLogs", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
+            serverRes = await fetch("http://127.0.0.1:8086/storage/getLogs", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
             .then(response => response.json())
-            generalData = await fetch("http://127.0.0.1:8000/storage/getData", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
+            generalData = await fetch("http://127.0.0.1:8086/storage/getData", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
             .then(response => response.json())
         }else{
-            serverRes = await fetch("http://127.0.0.1:8000/storage/getLogs")
+            serverRes = await fetch("http://127.0.0.1:8086/storage/getLogs")
             .then(response => response.json())
-            generalData = await fetch("http://127.0.0.1:8000/storage/getData")
+            generalData = await fetch("http://127.0.0.1:8086/storage/getData")
             .then(response => response.json())
         }
         if(generalData.data.Message == null){
@@ -152,13 +152,14 @@ const fetchLatestData = async(date = null) => {
             textAlert.appendChild(document.createTextNode(generalData.data.Message))
             divAlert.appendChild(textAlert)
             contenSection.appendChild(divAlert)
+            setupHotButton(true)
         }
     }else{
         if(date != null){
-            serverRes = await fetch("http://127.0.0.1:8000/storage/getLoadPins", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
+            serverRes = await fetch("http://127.0.0.1:8086/storage/getLoadPins", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"date": date})})
             .then(response => response.json())
         }else{
-            serverRes = await fetch("http://127.0.0.1:8000/storage/getLoadPins")
+            serverRes = await fetch("http://127.0.0.1:8086/storage/getLoadPins")
             .then(response => response.json())
         }
         console.log(serverRes)
@@ -452,28 +453,7 @@ const initializeFiltersSection = ()=>{
     sectionTitle.appendChild(document.createTextNode("Filters"))
     sectionBody = document.createElement("div")
     sectionBody.classList.add("border", "border-[#325D88]", "border-[0.25rem]", "border-t-0", "w-full", "h-[10rem]", "rounded-b-lg", "flex", "flex-col", "items-center")
-    buttonHotPlot = document.createElement("div")
-    buttonHotPlot.classList.add("hotPlots", "rounded-xl", "bg-[#00004A]", "text-white", "flex", "items-center", "justify-center", "mt-5", "w-[12.5rem]", "p-2", "hover:cursor-pointer", "self-center", "text-xl", "border-[#00E4D8]", "border")
-    buttonHotPlot.appendChild(document.createTextNode("Create latest plots"))
-    buttonHotPlot.addEventListener("click", ()=>{
-        let loaderSpace = document.createElement("div")
-        loaderSpace.classList.add("w-[15%]", "h-full", "relative", "flex", "justify-center", "items-center")
-        let loaderBar = document.createElement("div")
-        loaderBar.classList.add("Bar", "rounded-full", "border-[#00E4D8]", "border","absolute" , "w-[3rem]", "h-[3rem]")
-        loaderSpace.appendChild(loaderBar)
-        let divHotPot = document.createElement("div")
-        divHotPot.classList.add("hotPotsMessage", "flex", "gap-x-1", "mt-3")
-        let message = document.createElement("p")
-        message.classList.add("select-none")
-        message.appendChild(document.createTextNode("Generating the plots...\n You will be redirected when they are generated."))
-        divHotPot.appendChild(loaderSpace)
-        divHotPot.appendChild(message)
-        if(filtersSection.children.length <= 2){
-            filtersSection.appendChild(divHotPot)
-        }
-        generateHotPlots()
-    })
-    filtersSection.appendChild(buttonHotPlot)
+    setupHotButton()
 }
 /**
  * Function to create the filter form and the inputs inside it
@@ -1033,12 +1013,16 @@ const createTopButton = ()=>{
     })
     body.appendChild(topButton)
 }
+/**
+ * Functionality to generate the Drive plots when the button is pressed
+ */
 const generateHotPlots = async()=>{
-    let response = await fetch("http://127.0.0.1:8000/storage/generateHotPlots")
+    let response = await fetch("http://127.0.0.1:8086/storage/generateHotPlots")
     .then((res)=> res.json())
+    console.log(response)
     if(response.Message == null){
         if(response.status == 123423){
-            window.location.replace("http://127.0.0.1:8000/driveMonitoring")
+            window.location.replace("http://127.0.0.1:8086/driveMonitoring")
         }else{
             console.log(response.status)
         }
@@ -1047,6 +1031,38 @@ const generateHotPlots = async()=>{
         foundHotPotLoader.innerHTML = ""
         let newMessage = document.createElement("p")
         newMessage.appendChild(document.createTextNode(response.Message))
-        newMessage.classList("text-red-500")
+        newMessage.classList.add("text-red-500")
+        foundHotPotLoader.appendChild(newMessage)
+    }
+}
+/**
+ * Function to initialize the Button to generate the Drive Hot Plots
+ */
+const setupHotButton = (status = false)=>{
+    buttonHotPlot = document.createElement("div")
+    buttonHotPlot.classList.add("hotPlots", "rounded-xl", "bg-[#00004A]", "text-white", "flex", "items-center", "justify-center", "mt-5", "w-[12.5rem]", "p-2", "hover:cursor-pointer", "self-center", "text-xl", "border-[#00E4D8]", "border")
+    buttonHotPlot.appendChild(document.createTextNode("Create latest plots"))
+    buttonHotPlot.addEventListener("click", ()=>{
+        let loaderSpace = document.createElement("div")
+        loaderSpace.classList.add("w-[15%]", "h-full", "relative", "flex", "justify-center", "items-center")
+        let loaderBar = document.createElement("div")
+        loaderBar.classList.add("Bar", "rounded-full", "border-[#00E4D8]", "border","absolute" , "w-[3rem]", "h-[3rem]")
+        loaderSpace.appendChild(loaderBar)
+        let divHotPot = document.createElement("div")
+        divHotPot.classList.add("hotPotsMessage", "flex", "gap-x-1", "mt-3")
+        let message = document.createElement("p")
+        message.classList.add("select-none")
+        message.appendChild(document.createTextNode("Generating the plots... You will be redirected when they are generated."))
+        divHotPot.appendChild(loaderSpace)
+        divHotPot.appendChild(message)
+        if(filtersSection.children.length <= 2){
+            filtersSection.appendChild(divHotPot)
+        }
+        generateHotPlots()
+    })
+    filtersSection.appendChild(buttonHotPlot)
+    if(status){
+        buttonHotPlot.classList.remove("mt-5")
+        buttonHotPlot.classList.add("mt-2")
     }
 }
