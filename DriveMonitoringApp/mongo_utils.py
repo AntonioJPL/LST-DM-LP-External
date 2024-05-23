@@ -7,6 +7,9 @@ from datetime import datetime
 import datetime as DT
 import pytz
 from django.contrib.staticfiles import finders
+import logging
+
+logger = logging.getLogger(__name__)
 
 #Class containing all the Database information and functions
 class MongoDb:
@@ -17,6 +20,7 @@ class MongoDb:
     #Function that returns all the logs data in between an operation Tmin and Tmax value, if there is no operation or there are more than one operation for the same date it returns a Message
     def listLogs(self, date):
         operation = list(self.dbname["Operations"].find({"Date": date}))
+        print(operation)
         if len(operation) == 1:
             start = datetime.fromtimestamp(operation[0]["Tmin"])
             start = str(start).split(" ")
@@ -85,13 +89,32 @@ class MongoDb:
     def isData(self):
         return True if len(self.dbname["Data"].distinct("_id")) > 0 else False
     #Function that returns the latest date stored. It takes it from the logs      
-    def getLatestDate(self):
-        result =  list(self.dbname["Logs"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
-        dateParts = result[0]["Date"].split("-")
-        newDay = int(dateParts[2])-1
-        newDay = str(newDay)
-        result = dateParts[0]+"-"+dateParts[1]+"-"+newDay.zfill(2)
-        return result
+    def getLatestDate(self, web = None):
+        if web is None:
+            result =  list(self.dbname["Logs"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
+            dateParts = result[0]["Date"].split("-")
+            newDay = int(dateParts[2])-1
+            newDay = str(newDay)
+            result = dateParts[0]+"-"+dateParts[1]+"-"+newDay.zfill(2)
+            return result
+        else: 
+            if web == "driveMonitoring":
+                result =  list(self.dbname["Operations"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
+                return result[0]["Date"]
+            else:
+                path = "DataStorage/static/html"
+                files = [elements for elements in os.listdir(path)]
+                foundFile = None
+                for i in range(1, len(files)+1):
+                    i = i*-1
+                    if os.path.exists(path+"/"+files[i]+"/LoadPin"):
+                        logger.debug("Yes")
+                        foundFile = files[i]
+                        logger.debug(foundFile)
+                        break
+                if foundFile is not None:
+                    return foundFile.replace("Log_cmd.", "")
+    
     #Function that returns the types, dates and times for the given date as an object
     def getFilters(self, date):
         if(date == None):

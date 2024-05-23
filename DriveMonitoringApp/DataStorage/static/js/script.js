@@ -125,6 +125,8 @@ const fetchLatestData = async(date = null) => {
             generalData = await fetch("http://127.0.0.1:8086/storage/getData")
             .then(response => response.json())
         }
+        console.log(serverRes)
+        console.log(generalData)
         if(generalData.data.Message == null){
             initializeFiltersSection()
             generateStructure()
@@ -153,6 +155,7 @@ const fetchLatestData = async(date = null) => {
             divAlert.appendChild(textAlert)
             contenSection.appendChild(divAlert)
             setupHotButton(true)
+            deactivateLoader()
         }
     }else{
         if(date != null){
@@ -179,6 +182,7 @@ const fetchLatestData = async(date = null) => {
             textAlert.appendChild(document.createTextNode(serverRes.Message))
             divAlert.appendChild(textAlert)
             plotsArea.appendChild(divAlert)
+            deactivateLoader()
         }
     }
 }
@@ -208,7 +212,7 @@ window.addEventListener("click", (e)=>{
         isPickerOpen = false
     }
 })
-
+console.log("Fetching the data to date: "+input.value)
 fetchLatestData(input.value)
 /**
  * Function that fills the logsData array with the commands found on data
@@ -688,7 +692,12 @@ const showAllData = (data)=>{
         imageArray.sort((a,b)=>{return a.length - b.length})
         for (let i = 0; i < imageArray.length; i++) {   
             let newIframe = document.createElement("iframe")
-            newIframe.setAttribute("src", URLPath+imageArray[i])
+            if(i == 0){
+                newIframe.onload = ()=>{
+                    deactivateLoader()
+                }
+            }
+            newIframe.setAttribute("src", URLPath+"storage/getHTML/?file=DataStorage/"+imageArray[i])
             newIframe.setAttribute("loading", "lazy")
             newIframe.classList.add("w-[95%]", "h-[25rem]", "self-center")
             if(!imageArray[i].includes("torque") && !imageArray[i].includes("Diff")){
@@ -841,7 +850,6 @@ const changeTitleAndFetch = (value)=>{
     }
     updateAnchorHref()
     fetchLatestData(value)
-    setTimeout(deactivateLoader, 1000)
 }
 /**
  * Function that starts the plot sections, it generates the cables representation, the 10X cables and the 20X cables sections on the Load Pins Website
@@ -929,7 +937,8 @@ const showLoadPins = (array) =>{
         let plotDiv = document.createElement("div")
         plotDiv.classList.add("flex")
         let newIframe = document.createElement("iframe")
-        newIframe.setAttribute("src", URLPath+element)
+        console.log(element)
+        newIframe.setAttribute("src", URLPath+"storage/getHTML/?file=DataStorage/"+element)
         newIframe.classList.add("w-[100%]", "h-[27.5rem]", "self-center")
         plotDiv.appendChild(newIframe)
         if (element.includes("10X")){
@@ -938,6 +947,9 @@ const showLoadPins = (array) =>{
         }else{
             let twoHundredCables = document.querySelector("div.twoHundred")
             twoHundredCables.appendChild(plotDiv)
+            newIframe.onload = ()=>{
+                deactivateLoader()
+            }
         }
     })
 }
@@ -968,14 +980,6 @@ const checkLoader = ()=>{
     let foundModal = document.querySelector("div.modal")
     return foundModal != null
 }
-window.onload = ()=>{
-    setTimeout(()=>{
-        if(checkLoader()){
-            deactivateLoader()
-        }
-    }, 1000)
-}
-
 /**
  * Function that creates the "Return to top" button and adds the functionalities to it
  */

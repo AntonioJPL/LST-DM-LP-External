@@ -14,14 +14,17 @@ import os, subprocess
 from os import path as ph
 import paramiko
 from Ssh_Info import IP, PASS, USERNAME
+import logging
+
+logger = logging.getLogger(__name__)
 
 #Function that returns the data and render the DriveMonitoring view or throws an Json response with an error message
 def driveMonitoring(request):
     if MongoDb.isData(MongoDb) == True:
         if request.GET.get("date") is None:
-            latestTime = MongoDb.getLatestDate(MongoDb)
+            latestTime = MongoDb.getLatestDate(MongoDb, "driveMonitoring")
             data = [latestTime]
-            print(data)
+            logger.debug(data)
             return render(request, "storage/driveMonitoring.html", {"data" : data})
         else:
             date = request.GET.get("date")
@@ -34,7 +37,7 @@ def driveMonitoring(request):
 def loadPins(request):
     if MongoDb.isData(MongoDb) == True:
         if request.GET.get("date") is None:
-            latestTime = MongoDb.getLatestDate(MongoDb)
+            latestTime = MongoDb.getLatestDate(MongoDb, "loadPins")
             data = [latestTime]
             print(data)
             return render(request, "storage/loadPins.html", {"data" : data})
@@ -58,7 +61,9 @@ def getLogs(request):
         if request.method == "POST":
             if MongoDb.isData(MongoDb) == True:
                 userdict = json.loads(str(request.body,encoding='utf-8'))
+                logger.debug(userdict)
                 data = {"data": MongoDb.listLogs(MongoDb, userdict["date"]), "filters": MongoDb.getFilters(MongoDb, userdict["date"])}
+                logger.debug(data)
                 return JsonResponse(data)
             else:
                 return JsonResponse({"Message": "There is no data to show"})
@@ -293,16 +298,23 @@ def generateHotPlots(request):
             #Command to generate the the host-keys permanently: ssh -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=./known_hosts user@host
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(IP, username=USERNAME, password=PASS)
-            commands = ''' source /Users/antoniojose/Desktop/LST1-DM-WEB/.venv/bin/activate
-                            sh /Users/antoniojose/Desktop/LST1-DM-WEB/DisplayTrack-HotPlots.sh %s''' % (date)
-            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command("ls -la")
-            return JsonResponse({"status": "Este es el error: "+str(ssh_stderr.read().decode())+"Este es el in: "+str(ssh_stdin.read().decode())+"Este es el out: "+str(ssh_stdout.read().decode())})
+            commands = ''' source Desktop/LST-DM-LP-Internal/.venv/bin/activate
+                            cd Desktop/LST-DM-LP-Internal
+                            sh DisplayTrack-HotPlots.sh %s''' % (date)
+            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(commands)
+            logger.info("Script execution output: {}".format(ssh_stdout.read().decode()))
+            logger.error("Script execution error: {}".format(ssh_stderr.read().decode()))
+            ssh.close()
+            return JsonResponse({"status": 123423})
+        except paramiko.SSHException as e:
+            logger.error("SSHException ocurred: {}".format(str(e)))
+            return JsonResponse({"status": "There was an error. Check Logs."})
         except Exception as e:
-            return JsonResponse({"Message": "There was an error: "+str(e)})
-
+            return JsonResponse({"Message": "There was an error: {} ".format(str(e))})
+#Function to check if the server is available
 def health(request):
     return HttpResponse("Server is working")
-
+#Function to check if the past plots are generated correctly
 @csrf_exempt
 def checkPlots(request):
     try:
@@ -324,3 +336,14 @@ def checkPlots(request):
             return JsonResponse({"data": False})
     except Exception as e:
         return JsonResponse({"data": "There was an error or all the plots are already generated: "+str(e)})
+#Function to load the html applying the compression to optimize the loading times in the LoadPin WP
+def compressResponse(request):
+    file =request.GET.get("file")
+    file = file[0:-1]
+    logger.debug(f"The request file is: {file}")
+    if file is not None:
+        with open(file, 'r') as html_file:
+            html_content = html_file.read()
+        response = HttpResponse(html_content, content_type='text/html')
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        return response

@@ -36,4 +36,5 @@ urlpatterns = [
     path('storage/generateHotPlots', Sv.generateHotPlots),
     path('storage/hotPlotGeneration', Sv.generateDriveHotPlots),
     path('storage/checkPlots', Sv.checkPlots),
+    path('storage/getHTML/', Sv.compressResponse)
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

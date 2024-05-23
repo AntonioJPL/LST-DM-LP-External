@@ -46,6 +46,7 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
             else:
                 fig.add_trace(go.Scatter(x=dftrackSorted["Tth"], y=dftrackSorted["Azth"], line= dict(color="red", dash="dash"), yaxis="y2", name="Azimuth Th.", legendgroup="Azimuth Th.", showlegend=False, mode="lines"))
                 fig.add_trace(go.Scatter(x=dftrackSorted["Tth"], y=dftrackSorted["ZAth"], line= dict(color="black", dash="dash"), yaxis="y3", name="Zenith Angle Th.", legendgroup="Zenith Angle Th.", showlegend=False, mode="lines"))
+    pngName = path.split("/")
     fig.update_layout(
         xaxis_tickformat = "%H:%M:%S",
         yaxis= dict(
@@ -96,9 +97,9 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
             xanchor="center",
             x=0.5,
         ),
-    )
+)
     fig.update_yaxes(tickangle=7.5)
-    fig.write_html(path)
+    fig.write_html(path, full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", ""))))
     fig2 = go.Figure()
     generatedTorqueLegend = False
     if dftorque is not None:
@@ -155,7 +156,7 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
         ),
     )
     fig2.update_yaxes(tickangle=7.5)
-    fig2.write_html(path.replace(".html", "-torque.html"))  
+    fig2.write_html(path.replace(".html", "-torque.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"-torque")))  
 #This function generates the third plot, it is just present some times. Here is all personalization of the plot and the treatment of the data. Once the plot is generated it is saved into the given path as an HTML file
 def FigAccuracyTime(dfacc, path):
     #addhtmlfile(fichierhtml,figname2)
@@ -215,6 +216,7 @@ def FigAccuracyTime(dfacc, path):
                 fig.add_trace(go.Scatter(x=dfacc[i]["T"], y=dfacc[i]["Azmax"], line= dict(color=("rgba(0,0,0,0)")), name="Azimuth", legendgroup="Azimuth", fill="tonexty", fillcolor="rgba(0,0,255,0.5)", showlegend=False, mode="lines"))
                 fig.add_trace(go.Scatter(x=dfacc[i]["T"], y=dfacc[i]["Zdmin"], line= dict(color=("rgba(0,0,0,0)")), name="Zenith angle", legendgroup="Zenith angle", showlegend=False, mode="lines"))
                 fig.add_trace(go.Scatter(x=dfacc[i]["T"], y=dfacc[i]["Zdmax"], line= dict(color=("rgba(0,0,0,0)")), name="Zenith angle", legendgroup="Zenith angle", fill="tonexty", fillcolor="rgba(255,0,0,0.5)", showlegend=False, mode="lines"))
+        pngName = path.split("/")
         fig.update_layout(
             xaxis_tickformat = "%H:%M:%S",
             yaxis= dict(
@@ -235,11 +237,11 @@ def FigAccuracyTime(dfacc, path):
                 y=1.2,
                 xanchor="center",
                 x=0.5,
-            )
+            ),
         )
         fig.update_yaxes(tickangle=7.5)
-        fig.write_html(path.replace(".html", "_Diff.html"))
-#This generates the final section of the plots, right now is not being used
+        fig.write_html(path.replace(".html", "_Diff.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_Diff")))
+#This generates the final section of the plots, right now is NOT BEING USED
 def FigureRADec(dfpos,dfbm,ra,dec,dfacc,dftrack, path):  
     fig1 = make_subplots(specs=[[{"secondary_y": True}]])
     fig2 = make_subplots(specs=[[{"secondary_y": True}]])
@@ -368,6 +370,7 @@ def FigureLoadPin(dfloadpin, path, date):
         fig2.add_trace(go.Scatter(x=loadPinSorted[mask211]["T"], y=loadPinSorted[mask211]["Load"], line= dict(color="yellow"), name="Cable 211", legendgroup="Cable 211", mode="lines"))
         fig2.add_trace(go.Scatter(x=loadPinSorted[mask212]["T"], y=loadPinSorted[mask212]["Load"], line= dict(color="purple"), name="Cable 212", legendgroup="Cable 212", mode="lines"))
         fig2.add_trace(go.Scatter(x=loadPinSorted[mask213]["T"], y=loadPinSorted[mask213]["Load"], line= dict(color="red"), name="Cable 213", legendgroup="Cable 213", mode="lines"))
+        pngName = path.split('/')
         fig.update_layout(
             yaxis=dict(
                 title="Load[KG]"
@@ -378,7 +381,7 @@ def FigureLoadPin(dfloadpin, path, date):
                 y=1.15,
                 xanchor="center",
                 x=0.5,
-            )
+            ),
         )
         fig2.update_layout(
             yaxis=dict(
@@ -390,9 +393,9 @@ def FigureLoadPin(dfloadpin, path, date):
                 y=1.15,
                 xanchor="center",
                 x=0.5,
-            )
+            ),
         )
         fig.update_yaxes(tickangle=7.5)
         fig2.update_yaxes(tickangle=7.5)
-        fig.write_html(path.replace(".html", "_LoadPins10X.html"), full_html=False, include_plotlyjs='cdn')
-        fig2.write_html(path.replace(".html", "_LoadPins20X.html"), full_html=False, include_plotlyjs='cdn') #Added this two options to make the html file lighter, it causes a plotly.js to be loaded on the browser
+        fig.write_html(path.replace(".html", "_LoadPins10X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins10X")))
+        fig2.write_html(path.replace(".html", "_LoadPins20X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins20X"))) #Added this two options to make the html file lighter, it causes a plotly.js to be loaded on the browser
