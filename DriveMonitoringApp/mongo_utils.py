@@ -8,12 +8,12 @@ import datetime as DT
 import pytz
 from django.contrib.staticfiles import finders
 import logging
-
+from Ssh_Info import IP
 logger = logging.getLogger(__name__)
 
 #Class containing all the Database information and functions
 class MongoDb:
-    my_client = pymongo.MongoClient('192.168.0.23', 27005)
+    my_client = pymongo.MongoClient(IP, 27005)
     dbname = my_client['Drive-Monitoring']
     collection_logs = dbname["Logs"]
     collection_data = dbname["Data"]
@@ -114,7 +114,6 @@ class MongoDb:
                         break
                 if foundFile is not None:
                     return foundFile.replace("Log_cmd.", "")
-    
     #Function that returns the types, dates and times for the given date as an object
     def getFilters(self, date):
         if(date == None):

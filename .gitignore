@@ -19,3 +19,5 @@ DriveMonitoringWeb/
 
 id_rsa.pub
 
+.ssh
+Ssh_Info.py
