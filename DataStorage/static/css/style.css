@@ -1,0 +1,47 @@
+div.Bar{
+    border-top: 0;
+    border-bottom: 0;
+    border-right: 0;
+    border-width: 0.5rem;
+    animation: 1s infinite linear rotation;
+}
+div.modal{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+}
+
+@keyframes rotation {
+    from{
+        transform: rotate(0deg);
+    }
+    to{
+        transform: rotate(360deg);
+    }
+    
+}
+
+.slideUp{
+    animation: 0.3s linear slideUp
+}
+@keyframes slideUp {
+    from{
+        transform: translateY(15rem);
+    }
+    100%{
+        transform: translateY(0);
+    }
+}
+
+.slideDown{
+    animation: 0.3s linear slideDown
+}
+@keyframes slideDown {
+    from{
+        transform: translateY(0);
+    }
+    to{
+        transform: translateY(15rem);
+    }
+}
