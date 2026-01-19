@@ -5,9 +5,21 @@ import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz, solar_system_ephemeris,ICRS
 import plotly.graph_objects as go
+import plotly.io as pio
 from plotly.subplots import make_subplots
 from django.contrib.staticfiles import finders
 import os
+
+def fig_to_responsive_json(fig):
+    """
+    Convert a Plotly figure into a responsive JSON spec (no fixed width/height).
+    This keeps the plot fluid in the frontend.
+    """
+    fig.update_layout(autosize=True)
+    spec = fig.to_plotly_json()
+    spec.get("layout", {}).pop("width", None)
+    spec.get("layout", {}).pop("height", None)
+    return spec
 
 #This function generates the first and seccond plots. The first plot is the LOAD (fig variable) one and the seccond one is the Torque plot (fig2 variable). Here is all personalization of the plots and the treatment of the data. Once each plot is generated it saves them into the given path as an HTML file
 def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
@@ -15,8 +27,6 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
     generatedCableLegend = False
     generatedPositionLegend = False
     generatedPositionTTHLegend = False
-    print(dfpos)
-    print(dfloadpin)
     for i in range(0, len(dfpos)):
         if dfloadpin[i] is not None and dfloadpin[i].empty != True:
             mask107 = dfloadpin[i]['LoadPin']==107
@@ -103,8 +113,15 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
         ),
 )
     fig.update_yaxes(tickangle=7.5)
-    print(path)
-    fig.write_html(path, full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", ""))))
+    
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    json_path = path.replace(".html", ".json")
+    pio.write_json(fig, json_path, pretty=False)
+    
+    os.chmod(json_path, 0o644)
+
+    #fig.write_html(path, full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", ""))))
     fig2 = go.Figure()
     generatedTorqueLegend = False
     if dftorque is not None:
@@ -161,7 +178,13 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
         ),
     )
     fig2.update_yaxes(tickangle=7.5)
-    fig2.write_html(path.replace(".html", "-torque.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"-torque")))  
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    json_path = path.replace(".html", "-torque.json")
+    pio.write_json(fig2, json_path, pretty=False)
+    
+    os.chmod(json_path, 0o644)
+    #fig2.write_html(path.replace(".html", "-torque.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"-torque")))  
 #This function generates the third plot, it is just present some times. Here is all personalization of the plot and the treatment of the data. Once the plot is generated it is saved into the given path as an HTML file
 def FigAccuracyTime(dfacc, path):
     #addhtmlfile(fichierhtml,figname2)
@@ -245,7 +268,13 @@ def FigAccuracyTime(dfacc, path):
             ),
         )
         fig.update_yaxes(tickangle=7.5)
-        fig.write_html(path.replace(".html", "_Diff.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_Diff")))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        json_path = path.replace(".html", "_Diff.json")
+        pio.write_json(fig, json_path, pretty=False)
+        
+        os.chmod(json_path, 0o644)
+        #fig.write_html(path.replace(".html", "_Diff.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_Diff")))
 #This generates the final section of the plots, right now is NOT BEING USED
 def FigureRADec(dfpos,dfbm,ra,dec,dfacc,dftrack, path):  
     fig1 = make_subplots(specs=[[{"secondary_y": True}]])
@@ -305,9 +334,7 @@ def FigureLoadPin(dfloadpin, path, date):
     newPath = None
     if len(pathParts) <= 2:
         newPath = "static/"+path+"/LoadPin"
-        print(newPath)
         file = finders.find(newPath)
-        print(newPath)
         if file is None:
             file = os.path.abspath("DataStorage/"+newPath)
             if not os.path.exists(file):
@@ -403,6 +430,19 @@ def FigureLoadPin(dfloadpin, path, date):
             ),
         )
         fig.update_yaxes(tickangle=7.5)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        json_path = path.replace(".html", "_LoadPins10X.json")
+        pio.write_json(fig, json_path, pretty=False)
+        
+        os.chmod(json_path, 0o644)
         fig2.update_yaxes(tickangle=7.5)
-        fig.write_html(path.replace(".html", "_LoadPins10X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins10X")))
-        fig2.write_html(path.replace(".html", "_LoadPins20X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins20X"))) #Added this two options to make the html file lighter, it causes a plotly.js to be loaded on the browser
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        json_path = path.replace(".html", "_LoadPins20X.json")
+        pio.write_json(fig2, json_path, pretty=False)
+        
+        os.chmod(json_path, 0o644)
+        
+        #fig.write_html(path.replace(".html", "_LoadPins10X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins10X")))
+        #fig2.write_html(path.replace(".html", "_LoadPins20X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins20X"))) #Added this two options to make the html file lighter, it causes a plotly.js to be loaded on the browser
