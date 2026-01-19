@@ -1,0 +1,31 @@
+{% extends "storage/base.html" %}
+
+{% block title %} LST1-DM-{{data.0}} {% endblock %}
+{% block menu %} 
+    <header class="w-full h-[5rem] flex flex-col lg:justify-center justify-start items-center mb-3 border-b-2 pb-2">
+        <h1 class="title font-semibold text-5xl mb-1 text-[#3e3f3a]">LST-1 Drive Monitoring</h1>
+        <h3 class="subtitle text-xl text-[#3e3f3a]">Date: {{data.0}}</h3>
+        {% load static %}
+        <img class="w-[12rem] h-[4rem] absolute right-10 top-5" src="{% static 'img/logoCTA.png'%}" alt="Cherenkov Telescopes Array logo">
+    </header>
+{% endblock %}
+{% block content %} 
+    <div class="images flex flex-col justify-center gap-y-2 w-full mb-3">
+        <!-- <img class="w-[55rem] h-[30rem]" src="{% static 'img/generatedFig-All.png' %}" alt="Plot generated new"> -->
+        <div class="interactivePlot flex justify-evenly w-full">
+            <iframe class="w-[50%] h-[33rem]" src="{% static 'html/Log_cmd.2024-02-01/Track/Track_20240201_19h44m18s_20240201_19h45m39s_SkyCoord2.html' %}" frameborder="0"></iframe>
+        </div>
+        <div class="section1 flex justify-evenly w-full">
+            <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-green-500/50" src="{% static 'img/generatedFig.png' %}" alt="Plot generated new">
+            <!-- <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-red-500/50" src="{% static 'img/Log_cmd.2024-02-01/Track/Track_20240201_19h44m18s_20240201_19h45m39s.png' %}" alt="Plot generated old"> -->
+        </div>
+        <div class="section2 flex justify-evenly w-full">
+            <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-green-500/50" src="{% static 'img/generatedFig_Diff.png' %}" alt="Plot generated new">
+<!--             <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-red-500/50" src="{% static 'img/Log_cmd.2024-02-01/Track/Track_20240201_19h44m18s_20240201_19h45m39s_Diff.png' %}" alt="Plot generated old"> -->
+        </div>
+        <div class="section3 flex justify-evenly w-full">
+            <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-green-500/50" src="{% static 'img/generatedFig_SkyCoord.png' %}" alt="Plot generated new">
+<!--             <img class="w-[45rem] h-[25rem] p-1 rounded-lg bg-red-500/50" src="{% static 'img/Log_cmd.2024-02-01/Track/Track_20240201_19h44m18s_20240201_19h45m39s_SkyCoord.png' %}" alt="Plot generated old"> -->
+        </div>
+    </div>
+{% endblock %}

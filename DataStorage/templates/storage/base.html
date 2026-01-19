@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, minimum-scale=0.5">
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.png' %}">
+    <title>{% block title %}Template test{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="flex flex-col">
+    <nav class="topMenu flex justify-center mt-5 mb-3">
+        {% block menu %}{% endblock %}
+    </nav>
+    <div class="content w-full flex justify-end px-5 gap-x-2 mb-3">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
