@@ -48,6 +48,7 @@ class MongoDb:
     #Function that returns all the general data including the plots urls, it returns an object containing a "data" attribute. This attribut is an array of an object for each type of operation. Each object has data, file and type attributes. Data attribute contains all the data documents values of that type of operation in the given date. File attribute is an array of strings being this ones the urls to the interactive plots and the type attribute is a string identifier to this data group
     def listData(self, date):
         operation = list(self.dbname["Operations"].find({"Date": date}))
+        print('Looking for data in date: '+str(date)+' found results: '+str(len(operation)))
         if len(operation) == 1:
             try:
                 start = datetime.fromtimestamp(operation[0]["Tmin"])
@@ -62,14 +63,22 @@ class MongoDb:
                     plot = {}
                     plot["type"] = element["name"]
                     foundElement = list(self.dbname["Data"].aggregate([{"$match":{"$or": [{"$and": [{"Sdate": start[0]}, {"Stime": {"$gte": start[1]}}]}, {"$and": [{"Edate": end[0]},{"Etime": {"$lte": end[1]}}]}]}}, {"$match": {"type": str(element["_id"])}}, {"$addFields": {"_id": {"$toString": "$_id"}, "type": plot["type"]}}]))
+                    print(foundElement)
                     if len(foundElement) > 0:
                         file = foundElement[0]["file"].split("/")
                         filename = element["name"]+"-"+date+"-"+str(endDate.strftime("%Y-%m-%d"))
-                        file = finders.find(file[0]+"/"+file[1]+"/"+file[2])
-                        files = glob.glob(file+"/"+filename+"*")
+                        print(file)
+                        logParts = file[1].split('.')
+                        print(logParts)
+                        file = finders.find(file[0]+"/"+logParts[0]+'.'+date+"/"+file[2])
+                        print(file)
+                        #files = glob.glob(file+"/"+filename+"*")
+                        files = glob.glob(file+"/*")
+                        print(files)
                         if len(files) == 0:
                             filename = element["name"]+"-"+date+"-"+date
-                            files = glob.glob(file+"/"+filename+"*")
+                            #files = glob.glob(file+"/"+filename+"*")
+                            files = glob.glob(file+"/*")
                         plot["file"] = []
                         for i in range(0, len(files)):
                             files[i] = files[i].split("/")
@@ -102,18 +111,12 @@ class MongoDb:
                 result =  list(self.dbname["Operations"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
                 return result[0]["Date"]
             else:
-                path = "DataStorage/static/html"
+                path = "DataStorage/static/json"
                 files = [elements for elements in os.listdir(path)]
-                foundFile = None
-                for i in range(1, len(files)+1):
-                    i = i*-1
-                    if os.path.exists(path+"/"+files[i]+"/LoadPin"):
-                        logger.debug("Yes")
-                        foundFile = files[i]
-                        logger.debug(foundFile)
-                        break
-                if foundFile is not None:
-                    return foundFile.replace("Log_cmd.", "")
+                dates = [log.replace("Log_cmd.", "") for log in files if "-" in log]
+                dates.sort()
+                latestDate = dates[-1]
+                return latestDate
     #Function that returns the types, dates and times for the given date as an object
     def getFilters(self, date):
         if(date == None):
@@ -309,7 +312,7 @@ class MongoDb:
         return list(self.dbname["Types"].find())
     #Function that generates the Load Pin plot url and returns them. It generates the url based on the data "file" parameter and replaces the end of it with the found plot path.
     def getLPPlots(self, date):
-        newPath = "DataStorage/static/html/Log_cmd."+date+"/LoadPin"
+        newPath = "DataStorage/static/json/Log_cmd."+date+"/LoadPin"
         file = os.path.abspath(newPath)
         if file is not None:
             files = glob.glob(file+"/"+"LoadPin_"+date+"*")

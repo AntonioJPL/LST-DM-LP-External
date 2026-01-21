@@ -6,5 +6,5 @@ ENV PYTHONDONTWRITEBYTECODE 1
 WORKDIR /code/
 COPY requierements-django.txt /code/
 RUN pip install -r requierements-django.txt
-COPY . /code/
+# COPY . /code/
 EXPOSE 8000

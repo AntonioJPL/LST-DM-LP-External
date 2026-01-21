@@ -6,17 +6,23 @@ import json
 from bson.json_util import loads
 from mongo_utils import MongoDb
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime
+from datetime import datetime, timedelta
+import datetime as dt
 import pandas as pd
 from . import figuresFunctions
 from django.contrib.staticfiles import finders
 import os, subprocess
 from os import path as ph
 import paramiko
-from Ssh_Info import IP, PASS, USERNAME
+from Ssh_Info import IP
+from django.shortcuts import redirect
 import logging
 
 logger = logging.getLogger(__name__)
+
+#Function that redirects the user to the Drive Monitoring latest date
+def redirection(request):
+    return redirect('driveMonitoring')
 
 #Function that returns the data and render the DriveMonitoring view or throws an Json response with an error message
 def driveMonitoring(request):
@@ -24,7 +30,6 @@ def driveMonitoring(request):
         if request.GET.get("date") is None:
             latestTime = MongoDb.getLatestDate(MongoDb, "driveMonitoring")
             data = [latestTime]
-            logger.debug(data)
             return render(request, "storage/driveMonitoring.html", {"data" : data})
         else:
             date = request.GET.get("date")
@@ -38,6 +43,7 @@ def loadPins(request):
     if MongoDb.isData(MongoDb) == True:
         if request.GET.get("date") is None:
             latestTime = MongoDb.getLatestDate(MongoDb, "loadPins")
+            logger.info("This is the latest date: ", latestTime)
             data = [latestTime]
             print(data)
             return render(request, "storage/loadPins.html", {"data" : data})
@@ -61,9 +67,7 @@ def getLogs(request):
         if request.method == "POST":
             if MongoDb.isData(MongoDb) == True:
                 userdict = json.loads(str(request.body,encoding='utf-8'))
-                logger.debug(userdict)
                 data = {"data": MongoDb.listLogs(MongoDb, userdict["date"]), "filters": MongoDb.getFilters(MongoDb, userdict["date"])}
-                logger.debug(data)
                 return JsonResponse(data)
             else:
                 return JsonResponse({"Message": "There is no data to show"})
@@ -90,13 +94,13 @@ def getData(request, date = None):
                 return JsonResponse({"Message": "There is no data to show"})
 #Function that generates all the plots. This function takes quite long time, probably could be optimized
 def generatePlots(date, Hot = False):
-        print("Date recieved")
-        print(date)
-        operation = MongoDb.getOperation(MongoDb,date)
+        logger.debug("Date recieved")
+        logger.debug(date)
         generalTrack = None
         try:
+            operation = MongoDb.getOperation(MongoDb,date)
             #Folder structure creation
-            dirname = "DataStorage/static/html/Log_cmd." + date
+            dirname = "/code/DataStorage/static/json/Log_cmd." + date
             dirParts = dirname.split("/")
             if ph.exists(dirname.replace("/"+dirParts[-1], "")) == False:
                 os.mkdir(dirname.replace("/"+dirParts[-1], ""))
@@ -110,7 +114,11 @@ def generatePlots(date, Hot = False):
                         os.mkdir(dirname+"/Parkin")
             if ph.exists(dirname+"/GoToPos")==False :
                         os.mkdir(dirname+"/GoToPos")
-            data = MongoDb.getDatedData(MongoDb, operation[0]["Tmin"], operation[0]["Tmax"])
+            dateTime = datetime.fromtimestamp(operation[0]["Tmin"], tz=dt.timezone.utc)
+            newDt = dateTime.replace(hour=12, minute=0, second=0, microsecond=0)
+            newMinTimestamp = newDt.timestamp()
+            data = MongoDb.getDatedData(MongoDb, newMinTimestamp, operation[0]["Tmax"])
+            logger.debug(data)
             generalTrack = {}
             generalTrack["dfpos"], generalTrack["dfloadpin"], generalTrack["dftrack"], generalTrack["dftorque"], generalTrack["dfacc"], generalTrack["dfbm"], generalTrack["name"], generalTrack["addText"], generalTrack["RA"], generalTrack["DEC"] = ([] for i in range(10))
             generalParkin = {}
@@ -125,26 +133,29 @@ def generatePlots(date, Hot = False):
                 for type in types:
                     if str(type["_id"]) == element["type"]:
                         foundType =  type["name"]
-                stringTime = element["Sdate"]+" "+element["Stime"]
-                tmin = datetime.strptime(stringTime, '%Y-%m-%d %H:%M:%S').timestamp()
-                stringTime = element["Edate"]+" "+element["Etime"]
-                tmax = datetime.strptime(stringTime, '%Y-%m-%d %H:%M:%S').timestamp()
-                print("Getting data from mongo")
-                position = MongoDb.getPosition(MongoDb, tmin, tmax)
-                loadPin = MongoDb.getLoadPin(MongoDb, tmin, tmax)
-                track = MongoDb.getTrack(MongoDb, tmin, tmax)
-                torque = MongoDb.getTorque(MongoDb, tmin, tmax)
-                accuracy = MongoDb.getAccuracy(MongoDb, tmin, tmax)
-                bendModel = MongoDb.getBM(MongoDb, tmin, tmax)
-                dfpos = pd.DataFrame.from_dict(position)
-                dfloadpin = pd.DataFrame.from_dict(loadPin)
-                dftrack = pd.DataFrame.from_dict(track) 
-                dftorque = pd.DataFrame.from_dict(torque) 
-                dfbm = pd.DataFrame.from_dict(bendModel) 
-                dfacc = pd.DataFrame.from_dict(accuracy)
-                file = element["file"].split("/")
-                file = finders.find(file[0]+"/"+file[1]+"/"+file[2])
-                print("Making sections")
+                try:
+                    stringTime = element["Sdate"]+" "+element["Stime"]
+                    tmin = datetime.strptime(stringTime, '%Y-%m-%d %H:%M:%S').timestamp()
+                    stringTime = element["Edate"]+" "+element["Etime"]
+                    tmax = datetime.strptime(stringTime, '%Y-%m-%d %H:%M:%S').timestamp()
+                    logger.debug("Getting data from mongo")
+                    position = MongoDb.getPosition(MongoDb, tmin, tmax)
+                    loadPin = MongoDb.getLoadPin(MongoDb, tmin, tmax)
+                    track = MongoDb.getTrack(MongoDb, tmin, tmax)
+                    torque = MongoDb.getTorque(MongoDb, tmin, tmax)
+                    accuracy = MongoDb.getAccuracy(MongoDb, tmin, tmax)
+                    bendModel = MongoDb.getBM(MongoDb, tmin, tmax)
+                    dfpos = pd.DataFrame.from_dict(position)
+                    dfloadpin = pd.DataFrame.from_dict(loadPin)
+                    dftrack = pd.DataFrame.from_dict(track) 
+                    dftorque = pd.DataFrame.from_dict(torque) 
+                    dfbm = pd.DataFrame.from_dict(bendModel) 
+                    dfacc = pd.DataFrame.from_dict(accuracy)
+                    file = element["file"].split("/")
+                    file = finders.find(file[0]+"/"+file[1]+"/"+file[2])
+                except e:
+                    logger.debug(str(e))
+                logger.debug("Making sections")
                 if foundType == "Track":
                     generalTrack["dfpos"].append(dfpos)
                     generalTrack["dfloadpin"].append(dfloadpin)
@@ -155,7 +166,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalTrack["dfbm"].append(dfbm)
                     filename = "Track-"+datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d")+"-"+datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d")
-                    generalTrack["name"] = file+"/"+filename+".html"
+                    generalTrack["name"] = file+"/"+filename+".json"
                     generalTrack["addText"] = element["addText"]
                     generalTrack["RA"].append(element["RA"])
                     generalTrack["DEC"].append(element["DEC"])
@@ -169,7 +180,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalParkin["dfbm"].append(dfbm)
                     filename ="Park-in-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalParkin["name"] = file+"/"+filename+".html"
+                    generalParkin["name"] = file+"/"+filename+".json"
                     generalParkin["addText"] = element["addText"]
                     generalParkin["RA"].append(element["RA"])
                     generalParkin["DEC"].append(element["DEC"])
@@ -183,7 +194,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfbm.empty != True:
                         generalParkout["dfbm"].append(dfbm)
                     filename = "Park-out-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalParkout["name"] = file+"/"+filename+".html"
+                    generalParkout["name"] = file+"/"+filename+".json"
                     generalParkout["addText"] = element["addText"]
                     generalParkout["RA"].append(element["RA"])
                     generalParkout["DEC"].append(element["DEC"])
@@ -197,42 +208,56 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalGotopos["dfbm"].append(dfbm)
                     filename = "GoToPos-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalGotopos["name"] = file+"/"+filename+".html"
+                    generalGotopos["name"] = file+"/"+filename+".json"
                     generalGotopos["addText"] = element["addText"]
                     generalGotopos["RA"].append(element["RA"])
                     generalGotopos["DEC"].append(element["DEC"])
-            print("Generating figures")
+            logger.debug("Generating figures")
             try:
-                figuresFunctions.FigureTrack(generalTrack["addText"], generalTrack["dfpos"], generalTrack["dfloadpin"], generalTrack["dftrack"], generalTrack["dftorque"], generalTrack["name"])
-                figuresFunctions.FigureTrack(generalParkin["addText"], generalParkin["dfpos"], generalParkin["dfloadpin"], generalParkin["dftrack"], generalParkin["dftorque"], generalParkin["name"])
-                figuresFunctions.FigureTrack(generalParkout["addText"], generalParkout["dfpos"], generalParkout["dfloadpin"], generalParkout["dftrack"], generalParkout["dftorque"], generalParkout["name"])
-                figuresFunctions.FigureTrack(generalGotopos["addText"], generalGotopos["dfpos"], generalGotopos["dfloadpin"], generalGotopos["dftrack"], generalGotopos["dftorque"], generalGotopos["name"])
+                if len(generalTrack['dftrack']) > 0:
+                    figuresFunctions.FigureTrack(generalTrack["addText"], generalTrack["dfpos"], generalTrack["dfloadpin"], generalTrack["dftrack"], generalTrack["dftorque"], generalTrack["name"])
+                if len(generalParkin['dftrack']) > 0:
+                    figuresFunctions.FigureTrack(generalParkin["addText"], generalParkin["dfpos"], generalParkin["dfloadpin"], generalParkin["dftrack"], generalParkin["dftorque"], generalParkin["name"])
+                if len(generalParkout['dftrack']) > 0:
+                    figuresFunctions.FigureTrack(generalParkout["addText"], generalParkout["dfpos"], generalParkout["dfloadpin"], generalParkout["dftrack"], generalParkout["dftorque"], generalParkout["name"])
+                if len(generalGotopos['dftrack']) > 0:
+                    figuresFunctions.FigureTrack(generalGotopos["addText"], generalGotopos["dfpos"], generalGotopos["dfloadpin"], generalGotopos["dftrack"], generalGotopos["dftorque"], generalGotopos["name"])
             except Exception as e: 
-                print("Track plots could not be generated: "+str(e))
+                logger.debug("Track plots could not be generated: "+str(e))
             try:
+                logger.info(f"The condition to _Diff is {len(generalTrack['dfacc']) != 0}")
                 if len(generalTrack["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalTrack["dfacc"], generalTrack["name"])
+                    logger.debug(f"TRACK _Dif figure generated with {generalTrack['name']}")
                 if len(generalParkin["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalParkin["dfacc"], generalParkin["name"])
+                    logger.debug(f"PARKIN _Dif figure generated with {generalParkin['name']}")
                 if len(generalParkout["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalParkout["dfacc"], generalParkout["name"])
+                    logger.debug(f"PARKOUT _Dif figure generated with {generalParkout['name']}")
                 if len(generalGotopos["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalGotopos["dfacc"], generalGotopos["name"])
+                    logger.debug(f"GOTOPOS _Dif figure generated with {generalGotopos['name']}")
             except Exception as e:
-                print("Precision plots could not be generated: "+str(e))
+                logger.debug("Precision plots could not be generated: "+str(e))
         except Exception as e:
-            print("There was no general data or data had an error: "+str(e))
+            logger.debug("There was no general data or data had an error: "+str(e))
         if not Hot:
+            logger.debug("Enter")
             try:
                 path = None
-                if generalTrack != None:
+                if generalTrack != None and len(generalTrack['name']) > 0:
+                    logger.debug("The track info is: ",generalTrack)
                     path = generalTrack["name"]
                 else:
-                    path = "html/Log_cmd."+date
+                    path = "json/Log_cmd."+date
+                    logger.debug('The path is: '+path)
                 if path != None:
+                    logger.debug("Generating LP plots...")
+                    logger.debug(path)
                     figuresFunctions.FigureLoadPin(MongoDb.getAllLoadPin(MongoDb, date), path, date)
             except Exception as e:
-                print("Load Pin plots could not be generated: "+str(e))
+                logger.debug("Load Pin plots could not be generated: ", exc_info=True)
         #This section is to create the final plots on the track area but is not implemented
         """ if len(generalTrack["dfbm"]) != 0:
             figuresFunctions.FigureRADec(generalTrack["dfpos"], generalTrack["dfbm"], generalTrack["RA"], generalTrack["DEC"], generalTrack["dfacc"], generalTrack["dftrack"], generalTrack["name"])
@@ -290,27 +315,18 @@ def getLoadPins(request):
         return JsonResponse(MongoDb.getLPPlots(MongoDb, userdict["date"]))
 
 def generateHotPlots(request):
-    if request.method == "GET":
-        try:
-            date = datetime.now()
-            date = date.strftime("%Y-%m-%d")
-            ssh = paramiko.SSHClient()
-            #Command to generate the the host-keys permanently: ssh -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=./known_hosts user@host
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(IP, username=USERNAME, password=PASS)
-            commands = ''' source Desktop/LST-DM-LP-Internal/.venv/bin/activate
-                            cd Desktop/LST-DM-LP-Internal
-                            sh DisplayTrack-HotPlots.sh %s''' % (date)
-            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(commands)
-            logger.info("Script execution output: {}".format(ssh_stdout.read().decode()))
-            logger.error("Script execution error: {}".format(ssh_stderr.read().decode()))
-            ssh.close()
-            return JsonResponse({"status": 123423})
-        except paramiko.SSHException as e:
-            logger.error("SSHException ocurred: {}".format(str(e)))
-            return JsonResponse({"status": "There was an error. Check Logs."})
-        except Exception as e:
-            return JsonResponse({"Message": "There was an error: {} ".format(str(e))})
+   if request.method == "GET":
+       try:
+           date = datetime.now()
+           logger.debug(date.hour)
+           if 0<=date.hour<=9:
+               date= date-timedelta(days=1)
+           date = date.strftime("%Y-%m-%d")
+           command = ''' sh /opt/lst-drive/src/LST-DM-LP-Internal/DisplayTrack-HotPlots.sh %s''' % (date)
+           result = subprocess.run(command, shell=True, capture_output=True, text=True)
+           return JsonResponse({"status": 123423})
+       except Exception as e:
+           return JsonResponse({"Message": "There was an error: {} ".format(str(e))})
 #Function to check if the server is available
 def health(request):
     return HttpResponse("Server is working")

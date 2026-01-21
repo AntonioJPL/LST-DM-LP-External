@@ -24,6 +24,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('health', Sv.health),
     path('admin/', admin.site.urls),
+    path('', Sv.redirection, name="index"),
     path('driveMonitoring', Sv.driveMonitoring, name="driveMonitoring"),
     path('driveMonitoring/', Sv.driveMonitoring,  name="driveMonitoringD"),
     path('loadPins', Sv.loadPins, name="loadPins"),

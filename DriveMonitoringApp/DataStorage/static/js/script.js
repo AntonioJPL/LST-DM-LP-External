@@ -689,6 +689,7 @@ const showAllData = (data)=>{
         let histograms = document.createElement("section")
         histograms.classList.add("flex", "flex-col", "gap-y-2", "my-2")
         let imageArray = [...element.file]
+        console.log(imageArray)
         imageArray.sort((a,b)=>{return a.length - b.length})
         for (let i = 0; i < imageArray.length; i++) {   
             let newIframe = document.createElement("iframe")
