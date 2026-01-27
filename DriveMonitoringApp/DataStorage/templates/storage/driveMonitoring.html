@@ -2,24 +2,24 @@
 
 {% block title %} LST1-DM-{{data.0}} {% endblock %}
 {% block menu %} 
-    <header class="w-full h-[5rem] flex flex-col lg:justify-center justify-start items-center mb-3 border-b-2 pb-4">
-        <nav class="flex gap-x-3 absolute left-10 top-15">
-            <a class="driveMonitoring rounded-lg p-3 hover:border-[#5298DE] border-[#325D88] font-semibold border-[0.25rem]" href="{% url 'driveMonitoring' %}">Drive Monitoring</a>
-            <a class="loadPins rounded-lg p-3 hover:border-black/50 border-grey-800 font-semibold border-[0.25rem]" href="{% url 'loadPins' %}">Load Pin Monitoring</a>
+    <header class="w-full lg:h-[5rem] flex flex-col lg:justify-center justify-start items-center lg:mb-3 border-b-2 lg:pb-4 pb-1">
+        <nav class="flex lg:absolute lg:left-10 lg:top-5 lg:gap-x-3 gap-x-2 mb-2 lg:mb-0">
+            <a class="driveMonitoring rounded-lg lg:p-3 p-2 hover:border-[#5298DE] border-[#325D88] font-semibold border-[0.25rem] sm:text-sm md:text-base" href="{% url 'driveMonitoring' %}">Drive Monitoring</a>
+            <a class="loadPins rounded-lg lg:p-3 p-2 hover:border-black/50 border-grey-800 font-semibold border-[0.25rem] sm:text-sm md:text-base" href="{% url 'loadPins' %}">Load Pin Monitoring</a>
         </nav>
-        <h1 class="title font-semibold text-5xl mb-1 text-[#3e3f3a]">LST-1 Drive Monitoring</h1>
+        <h1 class="title font-semibold lg:text-5xl text-2xl mb-1 text-[#3e3f3a]">LST-1 Drive Monitoring</h1>
         <div class="dateInput">
-            <label for="date" class="subtitle text-xl text-[#3e3f3a]">Date:</label>
-            <input class="input hover:bg-gray-200 rounded-lg" type="date" name="date" id="date" value="{{data.0}}">
+            <label for="date" class="subtitle text-[#3e3f3a] text-sm lg:text-xl">Date:</label>
+            <input class="input hover:bg-gray-200 rounded-lg text-sm lg:text-xl" type="date" name="date" id="date" value="{{data.0}}">
         </div>
         <div class="description bg-gray-500 text-white absolute translate-y-[3.75rem] translate-x-[0.90rem] flex items-center p-1 rounded-lg hidden"><p>Click to open the calendar</p></div>
         {% load static %}
-        <img class="w-[14rem] h-[6rem] absolute right-10 top-1" src="{% static 'img/CTAOLogo.png'%}" alt="Cherenkov Telescopes Array logo">
+        <img class="lg:w-[14rem] lg:h-[6rem] w-[9rem] h-[4rem] lg:absolute right-10 top-1" src="{% static 'img/CTAOLogo.png'%}" alt="Cherenkov Telescopes Array logo">
     </header>
 {% endblock %}
 {% block content %} 
     {% if data %}
         <div class="filters w-[25vw] justify-self-center flex flex-col gap-y-0"></div>
-        <div class="textData w-[70vw] self-center flex flex-col gap-y-0 rounded-lg"></div>
+        <div class="textData lg:w-[70vw] w-[100%] self-center flex flex-col gap-y-0 rounded-lg"></div>
     {% endif %}
 {% endblock %}

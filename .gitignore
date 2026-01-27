@@ -13,6 +13,8 @@ DriveMonitoringApp/DataStorage/static/img/Log_cmd.2024-02-01/Track/
 
 DriveMonitoringApp/DataStorage/static/html
 
+DriveMonitoringApp/DataStorage/static/admin
+
 DriveMonitoringWeb/
 
 */__pycache__

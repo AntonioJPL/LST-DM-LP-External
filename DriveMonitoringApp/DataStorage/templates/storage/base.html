@@ -8,12 +8,13 @@
     <title>{% block title %}Template test{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body class="flex flex-col">
     <nav class="topMenu flex justify-center mt-5 mb-3">
         {% block menu %}{% endblock %}
     </nav>
-    <div class="content w-full flex justify-end px-5 gap-x-2 mb-3">
+    <div class="content w-full flex lg:flex-row flex-col justify-end items-center lg:px-5 px-2 gap-x-2 mb-3">
         {% block content %}{% endblock %}
     </div>
     <script src="{% static 'js/script.js' %}"></script>
