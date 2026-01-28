@@ -125,7 +125,7 @@ class MongoDb:
                 result =  list(self.dbname["Operations"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
                 return result[0]["Date"]
             else:
-                path = "DataStorage/static/json"
+                path = "DataStorage/staticfiles/json"
                 files = [elements for elements in os.listdir(path)]
                 dates = [log.replace("Log_cmd.", "") for log in files if "-" in log]
                 dates.sort()
@@ -326,7 +326,7 @@ class MongoDb:
         return list(self.dbname["Types"].find())
     #Function that generates the Load Pin plot url and returns them. It generates the url based on the data "file" parameter and replaces the end of it with the found plot path.
     def getLPPlots(self, date):
-        newPath = "DataStorage/static/json/Log_cmd."+date+"/LoadPin"
+        newPath = "DataStorage/staticfiles/json/Log_cmd."+date+"/LoadPin"
         file = os.path.abspath(newPath)
         if file is not None:
             files = glob.glob(file+"/"+"LoadPin_"+date+"*")
