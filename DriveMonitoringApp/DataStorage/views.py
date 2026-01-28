@@ -89,6 +89,7 @@ def getData(request, date = None):
             if MongoDb.isData(MongoDb) == True:
                 userdict = json.loads(str(request.body,encoding='utf-8'))
                 data = {"data": MongoDb.listData(MongoDb, userdict["date"])}
+                logger.info(data)
                 return JsonResponse(data)
             else:
                 return JsonResponse({"Message": "There is no data to show"})
@@ -100,7 +101,7 @@ def generatePlots(date, Hot = False):
         try:
             operation = MongoDb.getOperation(MongoDb,date)
             #Folder structure creation
-            dirname = "/code/DataStorage/static/json/Log_cmd." + date
+            dirname = "/code/staticfiles/json/Log_cmd." + date
             dirParts = dirname.split("/")
             if ph.exists(dirname.replace("/"+dirParts[-1], "")) == False:
                 os.mkdir(dirname.replace("/"+dirParts[-1], ""))

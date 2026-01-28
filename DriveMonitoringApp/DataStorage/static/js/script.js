@@ -31,6 +31,7 @@ const logsData = []
 const summaryParsedData = []
 let modal = null
 let rotateOverlay = null
+let windoWith = 0
 
 const URLPath = window.location.href.replace(/(driveMonitoring)?(loadPins)?\/?\??(date=)?(\d{4})?-?(\d{2})?-?(\d{2})?$/, "")
 let ULRParts = window.location.href.split("/")
@@ -226,6 +227,7 @@ const generateStructure = () => {
 
 const fetchLatestData = async (date = null) => {
     runLoader()
+    windoWith = window.screen.width
     let serverRes = null
     const mode = getMode()
 
@@ -1194,7 +1196,7 @@ async function renderPlot(div, url) {
     } catch (e) {
         div.style = "";
         div.innerHTML = `
-      <div style="padding:12px;border:1px solid #ddd;border-radius:8px;background-color:#eb4034;color:#FFF;text-align:center">
+      <div style="padding:12px;border:1px solid #ddd;border-radius:8px;background-color:#eb4034;color:#FFF;text-align:center;position:absolute;">
         There is no data to show
       </div>`;
         console.log(`Could not load file <code>${url}</code><br>${e.message}`);
@@ -1204,26 +1206,28 @@ async function renderPlot(div, url) {
 
 let resizeTimeout = null
 window.addEventListener("resize", () => {
-    applyRotateGuard()
-    clearTimeout(resizeTimeout)
-    resizeTimeout = setTimeout(async () => {
+    if((windoWith != window.screen.width) && !isLoaderActive()){
         applyRotateGuard()
-        const mode = getMode()
-        const date = getSelectedDate()
-        if (mode === "loadPins") {
-            const res = date
-                ? await fetch("/storage/getLoadPins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ "date": date }) }).then(r => r.json())
-                : await fetch("/storage/getLoadPins").then(r => r.json())
-            if (res && res.Message == null) {
-                await showLoadPins(res.plots)
+        clearTimeout(resizeTimeout)
+        resizeTimeout = setTimeout(async () => {
+            applyRotateGuard()
+            const mode = getMode()
+            const date = getSelectedDate()
+            if (mode === "loadPins") {
+                const res = date
+                    ? await fetch("/storage/getLoadPins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ "date": date }) }).then(r => r.json())
+                    : await fetch("/storage/getLoadPins").then(r => r.json())
+                if (res && res.Message == null) {
+                    await showLoadPins(res.plots)
+                } else {
+                    applyRotateGuard()
+                }
             } else {
-                applyRotateGuard()
+                await fetchLatestData(date)
             }
-        } else {
-            await fetchLatestData(date)
-        }
-        applyRotateGuard()
-    }, 200)
+            applyRotateGuard()
+        }, 200)
+    }
 })
 
 window.addEventListener("popstate", () => {
