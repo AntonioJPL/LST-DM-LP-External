@@ -89,6 +89,7 @@ def getData(request, date = None):
             if MongoDb.isData(MongoDb) == True:
                 userdict = json.loads(str(request.body,encoding='utf-8'))
                 data = {"data": MongoDb.listData(MongoDb, userdict["date"])}
+                logger.info(data)
                 return JsonResponse(data)
             else:
                 return JsonResponse({"Message": "There is no data to show"})
@@ -100,7 +101,7 @@ def generatePlots(date, Hot = False):
         try:
             operation = MongoDb.getOperation(MongoDb,date)
             #Folder structure creation
-            dirname = "/code/DataStorage/static/html/Log_cmd." + date
+            dirname = "/code/staticfiles/json/Log_cmd." + date
             dirParts = dirname.split("/")
             if ph.exists(dirname.replace("/"+dirParts[-1], "")) == False:
                 os.mkdir(dirname.replace("/"+dirParts[-1], ""))
@@ -166,7 +167,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalTrack["dfbm"].append(dfbm)
                     filename = "Track-"+datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d")+"-"+datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d")
-                    generalTrack["name"] = file+"/"+filename+".html"
+                    generalTrack["name"] = file+"/"+filename+".json"
                     generalTrack["addText"] = element["addText"]
                     generalTrack["RA"].append(element["RA"])
                     generalTrack["DEC"].append(element["DEC"])
@@ -180,7 +181,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalParkin["dfbm"].append(dfbm)
                     filename ="Park-in-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalParkin["name"] = file+"/"+filename+".html"
+                    generalParkin["name"] = file+"/"+filename+".json"
                     generalParkin["addText"] = element["addText"]
                     generalParkin["RA"].append(element["RA"])
                     generalParkin["DEC"].append(element["DEC"])
@@ -194,7 +195,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfbm.empty != True:
                         generalParkout["dfbm"].append(dfbm)
                     filename = "Park-out-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalParkout["name"] = file+"/"+filename+".html"
+                    generalParkout["name"] = file+"/"+filename+".json"
                     generalParkout["addText"] = element["addText"]
                     generalParkout["RA"].append(element["RA"])
                     generalParkout["DEC"].append(element["DEC"])
@@ -208,7 +209,7 @@ def generatePlots(date, Hot = False):
                     if dfbm is not None and dfacc.empty != True:
                         generalGotopos["dfbm"].append(dfbm)
                     filename = "GoToPos-"+str(datetime.fromtimestamp(operation[0]["Tmin"]).strftime("%Y-%m-%d"))+"-"+str(datetime.fromtimestamp(operation[0]["Tmax"]).strftime("%Y-%m-%d"))
-                    generalGotopos["name"] = file+"/"+filename+".html"
+                    generalGotopos["name"] = file+"/"+filename+".json"
                     generalGotopos["addText"] = element["addText"]
                     generalGotopos["RA"].append(element["RA"])
                     generalGotopos["DEC"].append(element["DEC"])
@@ -225,14 +226,19 @@ def generatePlots(date, Hot = False):
             except Exception as e: 
                 logger.debug("Track plots could not be generated: "+str(e))
             try:
+                logger.info(f"The condition to _Diff is {len(generalTrack['dfacc']) != 0}")
                 if len(generalTrack["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalTrack["dfacc"], generalTrack["name"])
+                    logger.debug(f"TRACK _Dif figure generated with {generalTrack['name']}")
                 if len(generalParkin["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalParkin["dfacc"], generalParkin["name"])
+                    logger.debug(f"PARKIN _Dif figure generated with {generalParkin['name']}")
                 if len(generalParkout["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalParkout["dfacc"], generalParkout["name"])
+                    logger.debug(f"PARKOUT _Dif figure generated with {generalParkout['name']}")
                 if len(generalGotopos["dfacc"]) != 0:
                     figuresFunctions.FigAccuracyTime(generalGotopos["dfacc"], generalGotopos["name"])
+                    logger.debug(f"GOTOPOS _Dif figure generated with {generalGotopos['name']}")
             except Exception as e:
                 logger.debug("Precision plots could not be generated: "+str(e))
         except Exception as e:
@@ -245,7 +251,7 @@ def generatePlots(date, Hot = False):
                     logger.debug("The track info is: ",generalTrack)
                     path = generalTrack["name"]
                 else:
-                    path = "html/Log_cmd."+date
+                    path = "json/Log_cmd."+date
                     logger.debug('The path is: '+path)
                 if path != None:
                     logger.debug("Generating LP plots...")

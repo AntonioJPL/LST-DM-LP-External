@@ -7,7 +7,8 @@ services:
       command: python3 manage.py runserver 0.0.0.0:8000
       volumes:
         - .:/code
-        - /fefs/onsite/data/R1/LSTN-01/lst-drive/DMonitoring/static:/code/DataStorage/static
+        - /opt/lst-drive/src/LST-DM-LP-External/DriveMonitoringApp/DataStorage/static:/code/DataStorage/static
+        - /fefs/onsite/data/R1/LSTN-01/lst-drive/DMonitoring/static:/code/staticfiles
 
     nginx:
         image: nginx

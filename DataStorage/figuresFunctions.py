@@ -116,10 +116,10 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
     
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    json_path = path.replace(".html", ".json")
+    json_path = path.replace(".json", ".json")
     pio.write_json(fig, json_path, pretty=False)
     
-    os.chmod(json_path, 0o644)
+    os.chmod(json_path, 0o755)
 
     #fig.write_html(path, full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", ""))))
     fig2 = go.Figure()
@@ -180,10 +180,10 @@ def FigureTrack(addText, dfpos,dfloadpin,dftrack,dftorque, path):
     fig2.update_yaxes(tickangle=7.5)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    json_path = path.replace(".html", "-torque.json")
+    json_path = path.replace(".json", "-torque.json")
     pio.write_json(fig2, json_path, pretty=False)
     
-    os.chmod(json_path, 0o644)
+    os.chmod(json_path, 0o755)
     #fig2.write_html(path.replace(".html", "-torque.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"-torque")))  
 #This function generates the third plot, it is just present some times. Here is all personalization of the plot and the treatment of the data. Once the plot is generated it is saved into the given path as an HTML file
 def FigAccuracyTime(dfacc, path):
@@ -270,10 +270,10 @@ def FigAccuracyTime(dfacc, path):
         fig.update_yaxes(tickangle=7.5)
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        json_path = path.replace(".html", "_Diff.json")
+        json_path = path.replace(".json", "_Diff.json")
         pio.write_json(fig, json_path, pretty=False)
         
-        os.chmod(json_path, 0o644)
+        os.chmod(json_path, 0o755)
         #fig.write_html(path.replace(".html", "_Diff.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_Diff")))
 #This generates the final section of the plots, right now is NOT BEING USED
 def FigureRADec(dfpos,dfbm,ra,dec,dfacc,dftrack, path):  
@@ -345,7 +345,7 @@ def FigureLoadPin(dfloadpin, path, date):
         if file is None:
             file = path.replace(pathParts[-4]+"/"+pathParts[-3]+"/"+pathParts[-2]+"/"+pathParts[-1], newPath)
             os.mkdir(file)
-    path = file+"/"+"LoadPin_"+date+".html"
+    path = file+"/"+"LoadPin_"+date+".json"
     print("This is the actual path: "+path)
     fig = go.Figure()
     fig2 = go.Figure()
@@ -432,17 +432,17 @@ def FigureLoadPin(dfloadpin, path, date):
         fig.update_yaxes(tickangle=7.5)
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        json_path = path.replace(".html", "_LoadPins10X.json")
+        json_path = path.replace(".json", "_LoadPins10X.json")
         pio.write_json(fig, json_path, pretty=False)
         
-        os.chmod(json_path, 0o644)
+        os.chmod(json_path, 0o755)
         fig2.update_yaxes(tickangle=7.5)
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        json_path = path.replace(".html", "_LoadPins20X.json")
+        json_path = path.replace(".json", "_LoadPins20X.json")
         pio.write_json(fig2, json_path, pretty=False)
         
-        os.chmod(json_path, 0o644)
+        os.chmod(json_path, 0o755)
         
         #fig.write_html(path.replace(".html", "_LoadPins10X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins10X")))
         #fig2.write_html(path.replace(".html", "_LoadPins20X.html"), full_html=False, include_plotlyjs='cdn', auto_open=False, config=dict(toImageButtonOptions=dict(filename=pngName[-1].replace(".html", "")+"_LoadPins20X"))) #Added this two options to make the html file lighter, it causes a plotly.js to be loaded on the browser

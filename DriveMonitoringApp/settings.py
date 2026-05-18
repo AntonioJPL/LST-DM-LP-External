@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+^*+31hhdwrm3bg(5r(lw8k^%3(*y_w5@o7nwrz=$ytsz*sjv6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ["localhost","127.0.0.1", "0.0.0.0", "10.1.11.101", "lst101-int", "10.1.8.1", "161.72.87.4", "10.200.100.102"]
 
 # Application definition
@@ -128,7 +128,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    "/fefs/onsite/data/R1/LSTN-01/lst-drive/DMonitoring/static"
+    "/code/DataStorage/static"
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"

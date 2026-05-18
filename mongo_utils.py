@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 #Class containing all the Database information and functions
 class MongoDb:
-    my_client = pymongo.MongoClient(IP, 27005)
+    my_client = pymongo.MongoClient(IP, 27005, directConnection=True)
     dbname = my_client['Drive-Monitoring']
     collection_logs = dbname["Logs"]
     collection_data = dbname["Data"]
@@ -62,19 +62,31 @@ class MongoDb:
                 for element in types:
                     plot = {}
                     plot["type"] = element["name"]
-                    foundElement = list(self.dbname["Data"].aggregate([{"$match":{"$or": [{"$and": [{"Sdate": start[0]}, {"Stime": {"$gte": start[1]}}]}, {"$and": [{"Edate": end[0]},{"Etime": {"$lte": end[1]}}]}]}}, {"$match": {"type": str(element["_id"])}}, {"$addFields": {"_id": {"$toString": "$_id"}, "type": plot["type"]}}]))
-                    print(foundElement)
+                    pipeline = [
+                                    {
+                                        "$match": {
+                                            "$or": [
+                                                {"$and": [{"Sdate": start[0]}, {"Stime": {"$gte": start[1]}}]},
+                                                {"$and": [{"Edate": end[0]}, {"Etime": {"$lte": end[1]}}]},
+                                            ]
+                                        }
+                                    },
+                                    {"$match": {"type": str(element["_id"])}},
+                                    {"$addFields": {"_id": {"$toString": "$_id"}, "type": plot["type"]}},
+                                ]
+                    foundElement = list(self.dbname["Data"].aggregate(pipeline, maxTimeMS=5000, allowDiskUse=True))
                     if len(foundElement) > 0:
                         file = foundElement[0]["file"].split("/")
                         filename = element["name"]+"-"+date+"-"+str(endDate.strftime("%Y-%m-%d"))
-                        print(file)
+                        print(file, flush=True)
                         logParts = file[1].split('.')
-                        print(logParts)
+                        print(logParts, flush=True)
+                        print(file[0]+"/"+logParts[0]+'.'+date+"/"+file[2])
                         file = finders.find(file[0]+"/"+logParts[0]+'.'+date+"/"+file[2])
-                        print(file)
+                        print(file, flush=True)
                         #files = glob.glob(file+"/"+filename+"*")
                         files = glob.glob(file+"/*")
-                        print(files)
+                        print(files, flush=True)
                         if len(files) == 0:
                             filename = element["name"]+"-"+date+"-"+date
                             #files = glob.glob(file+"/"+filename+"*")
@@ -96,7 +108,9 @@ class MongoDb:
             return {"Message": "There is more than one operation in this date"}
     #Function that returns true if there is data on the Data collection or false if there is not           
     def isData(self):
-        return True if len(self.dbname["Data"].distinct("_id")) > 0 else False
+        numberOfData = len(self.dbname["Data"].distinct("_id"))
+        print(f"This is the len of isData: {numberOfData}")
+        return True if numberOfData > 0 else False
     #Function that returns the latest date stored. It takes it from the logs      
     def getLatestDate(self, web = None):
         if web is None:
@@ -111,7 +125,7 @@ class MongoDb:
                 result =  list(self.dbname["Operations"].find({}, {"_id": 0 ,"Date": 1}).sort({"Date": -1}).limit(1))
                 return result[0]["Date"]
             else:
-                path = "DataStorage/static/html"
+                path = "staticfiles/json"
                 files = [elements for elements in os.listdir(path)]
                 dates = [log.replace("Log_cmd.", "") for log in files if "-" in log]
                 dates.sort()
@@ -312,7 +326,8 @@ class MongoDb:
         return list(self.dbname["Types"].find())
     #Function that generates the Load Pin plot url and returns them. It generates the url based on the data "file" parameter and replaces the end of it with the found plot path.
     def getLPPlots(self, date):
-        newPath = "DataStorage/static/html/Log_cmd."+date+"/LoadPin"
+        newPath = "staticfiles/json/Log_cmd."+date+"/LoadPin"
+        print(f"This is the file path: {newPath}")
         file = os.path.abspath(newPath)
         if file is not None:
             files = glob.glob(file+"/"+"LoadPin_"+date+"*")
